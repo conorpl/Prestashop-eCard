@@ -9,7 +9,7 @@
 
 <p>{l s='Za chwilę zostaniesz przekierowany na stronę płatności. Jeśli przekierowanie nie zadziała automatycznie kliknij "Dalej".' mod='ecard'}<br /></p>
 
-<form action="https://pay.ecard.pl/payment/PS" method="post" id="payment_form">
+<form action="https://pay.ecard.pl/payment/PS" method="post" id="payment_form" name="payment_form">
     <input type="hidden" name="COUNTRY" value="616"/>
     <input type="hidden" name="MERCHANTID" value="{$merchantId}"/>
     <input type="hidden" name="ORDERNUMBER" value="{$orderNumber}"/>
@@ -37,8 +37,7 @@
 {literal}
 // <![CDATA[
 $(document).ready(function() {
-
-$("#payment_form").Submit();
+    document.payment_form.submit();
 });
 // ]]>
 {/literal}
