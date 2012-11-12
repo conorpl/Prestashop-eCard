@@ -13,8 +13,8 @@ $customer   = new Customer(intval($cart->id_customer));
 
 //nr zamowienia
 
-//$orderNumber = intval($cart->id);
-$orderNumber = rand(10000, 999999999);
+$orderNumber = intval($cart->id);
+//$orderNumber = rand(10000, 999999999);
 
 //opis
 
