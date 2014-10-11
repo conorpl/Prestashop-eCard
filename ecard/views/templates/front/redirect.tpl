@@ -6,6 +6,9 @@
 {assign var='current_step' value='payment'}
 {include file="$tpl_dir./order-steps.tpl"}
 
+{if $amount <= 0}
+	<p class="warning">{l s='Your shopping cart is empty.' mod='bankwire'}</p>
+{else}
 
 <p>{l s='Za chwilę zostaniesz przekierowany na stronę płatności. Jeśli przekierowanie nie zadziała automatycznie kliknij "Dalej".' mod='ecard'}<br /></p>
 
@@ -37,8 +40,11 @@
 {literal}
 // <![CDATA[
 $(document).ready(function() {
-    document.payment_form.submit();
+    document.payment_form.submit.click();
 });
 // ]]>
 {/literal}
-</script>       
+</script>  
+{/if}
+
+     

@@ -3,7 +3,7 @@
 	<name>ecard</name>
 	<displayName><![CDATA[eCard]]></displayName>
 	<version><![CDATA[0.2]]></version>
-	<description><![CDATA[Accepts payments by eCard]]></description>
+	<description><![CDATA[Akceptuje płatności przez eCard]]></description>
 	<author><![CDATA[]]></author>
 	<tab><![CDATA[Payment]]></tab>
 	<is_configurable>1</is_configurable>
