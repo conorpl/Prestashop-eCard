@@ -1,23 +1,29 @@
 <?php
 
-include(dirname(__FILE__).'/../../config/config.inc.php');
-include(dirname(__FILE__).'/../../init.php');
-include(dirname(__FILE__).'/ecard.php');
+class ecardConfirmationModuleFrontController extends ModuleFrontController {
 
+    public $ssl = true;
+    public $display_column_left = false;
 
-if (!$cookie->isLogged())
-    Tools::redirect('authentication.php?back=order.php');
+    public function initContent() {
+        parent::initContent();
 
-$ecard      = new eCard();
-$cart       = new Cart(intval($cookie->id_cart));
-$customer   = new Customer(intval($cart->id_customer));
+        if (!Context::getContext()->customer->isLogged()) {
+            Tools::redirect('authentication.php?back=order.php');
+        }
 
-$id_cart    = (int)$cart->id;
-$order_state= Configuration::get('ECARD_PENDING');
-$total      = floatval(Tools::ps_round(floatval($cart->getOrderTotal(true, 3)), 2));
+        $cart = new Cart(intval(Context::getContext()->cookie->id_cart));
+        $customer = new Customer(intval($cart->id_customer));
 
-$ecard->validateOrder($id_cart, $order_state, $total, $ecard->displayName, '');
+        $id_cart = (int) $cart->id;
+        $order_state = Configuration::get('ECARD_PENDING');
+        $total = floatval(Tools::ps_round(floatval($cart->getOrderTotal(true, 3)), 2));
 
-Tools::redirect('order-confirmation.php?key=' . $customer->secure_key . '&'.
-               'id_cart=' . intval($cart->id) . '&' .
-               'id_module=' . intval($ecard->id) . '&slowvalidation');
+        $this->module->validateOrder($id_cart, $order_state, $total, $this->module->displayName, '');
+
+        Tools::redirect('order-confirmation.php?key=' . $customer->secure_key . '&' .
+                'id_cart=' . intval($cart->id) . '&' .
+                'id_module=' . intval($this->module->id) . '&slowvalidation');
+    }
+
+}

@@ -1,129 +1,90 @@
 <?php
 
-include(dirname(__FILE__).'/../../config/config.inc.php');
-include(dirname(__FILE__).'/../../header.php');
-include(dirname(__FILE__).'/ecard.php');
+class ecardRedirectModuleFrontController extends ModuleFrontController {
 
-if (!$cookie->isLogged())
-    Tools::redirect('authentication.php?back=order.php');
+    public $ssl = true;
+    public $display_column_left = false;
 
-$ecard      = new eCard();
-$cart       = new Cart(intval($cookie->id_cart));
-$customer   = new Customer(intval($cart->id_customer));
+    public function initContent() {
+        parent::initContent();
 
-//nr zamowienia
+        if (!Context::getContext()->customer->isLogged()) {
+            Tools::redirect('authentication.php?back=order.php');
+        }
+        
+        $cart = new Cart(intval(Context::getContext()->cookie->id_cart));
+        $customer = new Customer(intval($cart->id_customer));
 
-$orderNumber = intval($cart->id);
-//$orderNumber = rand(10000, 999999999);
+        $orderNumber = intval($cart->id);
+//        $orderNumber = rand(10000, 999999999);
 
-//opis
+        $orderDescription = (int) $orderNumber;
 
-$orderDescription = (int)$orderNumber;
+        $hsUrl = Configuration::get('ECARD_SERVERLETHS');
+        $merchantId = Configuration::get('ECARD_MERCHANTID');
+        $pass = Configuration::get('ECARD_PASS');
 
-$hsUrl      = Configuration::get('ECARD_SERVERLETHS');
-$merchantId = Configuration::get('ECARD_MERCHANTID');
-$pass       = Configuration::get('ECARD_PASS');
+        //kwota
+        $amount = $cart->getOrderTotal() * 100;
+        $currency = 985;
 
-//kwota
+        //waluta
+        $cart_currency = Currency::getCurrency($cart->id_currency);
 
-$amount     = $cart->getOrderTotal() * 100;
-$currency   = 985;
-
-//waluta
-
-$cart_currency = Currency::getCurrency( $cart->id_currency );
-
-$numericCurrency = array(
-        'PLN' => 985,
-        'USD' => 840,
-        'GBP' => 826,
-        'EUR' => 978
-    );
-
-$currency = $numericCurrency[ $cart_currency['iso_code'] ];
-
-//adres
-
-$address    = new Address(intval($cart->id_address_invoice));
-$name       = $address->firstname;
-$surname    = $address->lastname;
-
-//inne
-
-$autodeposit = 1;
-$paymenttype = "ALL";
-
-//linki do powrotu
-$url         = Tools::getHttpHost(true, true). __PS_BASE_URI__; 
-
-//$linkfail = $url;
-//$linkok   = $url;
-
-
-$linkfail    = $url . 'index.php';
-$linkok      = $url . 'modules/' . $ecard->name . '/confirmation.php';
-
-//hash
-
-$hash = md5($merchantId         . 
-            $orderNumber        .
-            $amount             .
-            $currency           .
-            $orderDescription   .
-            $name               .
-            $surname            .
-            $autodeposit        .
-            $paymenttype        .
-            $linkfail           .
-            $linkok             .
-            $pass
+        $numericCurrency = array(
+            'PLN' => 985,
+            'USD' => 840,
+            'GBP' => 826,
+            'EUR' => 978
         );
 
-/*
-$hsarray = array(
-        'orderNumber'       => $cart->id,
-        'orderDescription'  => '',
-        'amount'            => $amount,
-        'merchantId'        => $merchantId,
-        'password'          => $pass
-    );
+        $currency = $numericCurrency[$cart_currency['iso_code']];
 
-$curl = curl_init();
-curl_setopt($curl, CURLOPT_URL, $hsUrl);
-curl_setopt($curl, CURLOPT_HEADER, 0);
-curl_setopt($curl, CURLOPT_POST, 1);
-curl_setopt($curl, CURLOPT_POSTFIELDS, $hsarray);
-$result=curl_exec ($curl);
+        //adres
+        $address = new Address(intval($cart->id_address_invoice));
+        $name = $address->firstname;
+        $surname = $address->lastname;
 
-//if ( !$result ) exit('Unable to get hash');
+        //inne
+        $autodeposit = 1;
+        $paymenttype = "ALL";
 
-//exit( 'Result: "' . $result . '"');
-var_dump($result); var_dump($hsarray); exit();
-*/
+        //linki do powrotu
+        $url = Tools::getHttpHost(true, true) . __PS_BASE_URI__;
+        $linkfail = $url . 'module/' . $this->module->name . '/fail';
+        $linkok = $url . 'module/' . $this->module->name . '/confirmation';
 
-global $smarty;
+        //hash
+        $hash = md5($merchantId .
+                $orderNumber .
+                $amount .
+                $currency .
+                $orderDescription .
+                $name .
+                $surname .
+                $autodeposit .
+                $paymenttype .
+                $linkfail .
+                $linkok .
+                $pass
+        );
 
-$smarty->assign(array(
-	'merchantId'    => $merchantId,
-	'orderNumber'   => $orderNumber,
-	'orderDesc'     => $orderDescription,
-	'amount'        => $amount,
-	'currency'      => $currency,
-    'name'          => $name,
-    'surname'       => $surname,
-    'autodeposit'   => $autodeposit,
-    'paymenttype'   => $paymenttype,
-    'linkfail'      => $linkfail,
-    'linkok'        => $linkok,
-    'hash'          => $hash
-));
+        $this->context->smarty->assign(array(
+            'merchantId' => $merchantId,
+            'orderNumber' => $orderNumber,
+            'orderDesc' => $orderDescription,
+            'amount' => $amount,
+            'currency' => $currency,
+            'name' => $name,
+            'surname' => $surname,
+            'autodeposit' => $autodeposit,
+            'paymenttype' => $paymenttype,
+            'linkfail' => $linkfail,
+            'linkok' => $linkok,
+            'hash' => $hash
+        ));
 
-if (is_file(_PS_THEME_DIR_.'modules/ecard/redirect.tpl'))
-	$smarty->display(_PS_THEME_DIR_.'modules/'.$ecard->name.'/redirect.tpl');
-else
-	$smarty->display(_PS_MODULE_DIR_.$ecard->name.'/redirect.tpl');
+        $this->setTemplate('redirect.tpl');
+    }
 
-
-
-
-include_once(dirname(__FILE__).'/../../footer.php');
+}
